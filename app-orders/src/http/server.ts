@@ -1,19 +1,20 @@
+import "@opentelemetry/auto-instrumentations-node/register";
+import { trace } from "@opentelemetry/api";
 import { randomUUID } from "node:crypto";
-
+import { setTimeout } from "node:timers/promises";
 import { fastify } from "fastify";
 import { fastifyCors } from "@fastify/cors";
-
 import { z } from "zod";
 import {
   serializerCompiler,
   validatorCompiler,
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
-
 import { db } from "../db/client.ts";
 import { schema } from "../db/schema/index.ts";
 import { dispatchOrderCreated } from "../broker/messages/order-created.ts";
 import type { OrderCreatedMessage } from "../../../contracts/messages/order-created-message.ts";
+import { tracer } from "./tracer/tracer.ts";
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
 
@@ -43,6 +44,20 @@ app.post(
     const orderId = randomUUID();
     const customerId = "093e12d3-2e9f-441e-9dbf-8c4f1b23b2a5";
 
+    await db.insert(schema.orders).values({
+      id: orderId,
+      customerId,
+      amount,
+    });
+
+    const span = tracer.startSpan("Erro aqui");
+
+    await setTimeout(2000);
+
+    span.end();
+
+    trace.getActiveSpan()?.setAttribute("order_id", orderId);
+
     const data: OrderCreatedMessage = {
       orderId,
       amount,
@@ -52,12 +67,6 @@ app.post(
     };
 
     dispatchOrderCreated(data);
-
-    await db.insert(schema.orders).values({
-      id: orderId,
-      customerId,
-      amount,
-    });
 
     return reply.status(201).send();
   }
