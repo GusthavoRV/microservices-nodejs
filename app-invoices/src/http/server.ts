@@ -16,7 +16,7 @@ app.setValidatorCompiler(validatorCompiler);
 app.register(fastifyCors, { origin: "*" });
 
 app.get("/health", () => {
-  return "OK";
+  return "Invoices OK";
 });
 
 app.listen({ host: "0.0.0.0", port: 3334 }).then(() => {

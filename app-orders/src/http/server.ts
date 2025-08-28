@@ -24,7 +24,7 @@ app.setValidatorCompiler(validatorCompiler);
 app.register(fastifyCors, { origin: "*" });
 
 app.get("/health", () => {
-  return "OK";
+  return "Orders OK";
 });
 
 app.post(
